@@ -33,15 +33,17 @@ app.get("/", (req, res) => {
 
 app.get("/register", (req, res) => {
   let templateVars = {
-    user: users[req.cookies["user"]]
+    user: users[req.cookies["user_id"]]
   }
   return res.render("urls_register", templateVars);
 });
 
 app.get("/urls", (req, res) => {
+  let userID = req.cookies["user_id"];
+  let filteredURLS = filterObj(urlDatabase, (shortURL) => urlDatabase[shortURL].userID === userID);
   let templateVars = { 
     user: users[req.cookies["user_id"]],
-    urls: urlDatabase 
+    urls: filteredURLS 
   };
   return res.render("urls_index", templateVars);
 });
@@ -58,7 +60,6 @@ app.get("/urls/new", (req, res) => {
 
 app.get("/urls/:shortURL", (req, res) => {
   let { shortURL } = req.params;
-  console.log(urlDatabase[shortURL].longURL);
   let templateVars = { 
     shortURL, 
     longURL: urlDatabase[shortURL].longURL,
@@ -93,7 +94,6 @@ app.post("/urls", (req, res) => {
   let shortURL = generateRandomString();
   let { longURL } = req.body;
   urlDatabase[shortURL] = {longURL, userID: req.cookies['user_id']};
-  console.log(urlDatabase);
   res.redirect("/urls/" + shortURL);
 });
 
@@ -154,11 +154,11 @@ const generateRandomString = () => {
     tempStr += choices.charAt(getRandomInt(choices.length));
   }
   return tempStr;
-}
+};
 
 const getRandomInt = (max) => {
   return Math.floor(Math.random() * Math.floor(max));
-}
+};
 
 const isInObj = (obj, check) => {
   for(let item in obj){
@@ -167,7 +167,7 @@ const isInObj = (obj, check) => {
     }
   }
   return false;
-}
+};
 
 const findUser = (users, userEmail) => {
   for(let user in users) {
@@ -176,4 +176,14 @@ const findUser = (users, userEmail) => {
     }
   }
   return {};
-}
+};
+
+const filterObj = (obj, check) => {
+  const tempObj = {};
+  for (let item in obj) {
+    if(check(item)){
+      tempObj[item] = obj[item];
+    }
+  }
+  return tempObj;
+};
