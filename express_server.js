@@ -100,12 +100,18 @@ app.post("/urls", (req, res) => {
 app.post("/urls/:id", (req, res) => {
   let { id } = req.params;
   let { newLongURL } = req.body;
+  if(req.cookies["user_id"] !== urlDatabase[shortURL].userID){
+    return res.status(401).send("Unauthorized access.");
+  }
   urlDatabase[id].longURL = newLongURL;
   res.redirect("/urls");
 });
 
 app.post("/urls/:shortURL/delete", (req, res) => {
   let { shortURL } = req.params;
+  if(req.cookies["user_id"] !== urlDatabase[shortURL].userID){
+    return res.status(401).send("Unauthorized access.");
+  }
   delete urlDatabase[shortURL];
   res.redirect("/urls");
 });
