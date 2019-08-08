@@ -4,9 +4,9 @@ TinyApp is a full stack web application built with Node and Express to allow use
 
 ## Final Product
 
-!["Screenshot of URLs page"](https://github.com/GingSing/tinyapp/tree/master/docs/urls.png)
-!["Screenshot of new page"](https://github.com/GingSing/tinyapp/tree/master/docs/urls_new.png)
-!["Screenshot of show page"](https://github.com/GingSing/tinyapp/tree/master/docs/urls_show.png)
+!["Screenshot of URLs page"](https://raw.githubusercontent.com/GingSing/tinyapp/master/docs/urls.png)
+!["Screenshot of new page"](https://raw.githubusercontent.com/GingSing/tinyapp/tree/master/docs/urls_new.png)
+!["Screenshot of show page"](https://raw.githubusercontent.com/GingSing/tinyapp/tree/master/docs/urls_show.png)
 
 ## Dependencies
 
