@@ -3,7 +3,7 @@ const bodyParser = require('body-parser');
 const cookieSession = require('cookie-session');
 const bcrypt = require('bcrypt');
 const app = express();
-const PORT = 8080; // default port 8080
+const PORT = 8080;
 
 const { getUserByEmail, isInObj, generateRandomString, filterObj } = require('./helpers');
 
@@ -17,27 +17,14 @@ app.use(cookieSession({
 }));
 
 const urlDatabase = {
-  b6UTxQ: { longURL: "https://www.tsn.ca", userID: "aJ48lW" },
-  i3BoGr: { longURL: "https://www.google.ca", userID: "aJ48lW" }
 };
 
-
-const users = { 
-  "userRandomID": {
-    id: "userRandomID", 
-    email: "user@example.com", 
-    password: "purple-monkey-dinosaur"
-  },
- "user2RandomID": {
-    id: "user2RandomID", 
-    email: "user2@example.com", 
-    password: "dishwasher-funk"
-  }
-}
+const users = {
+};
 
 app.get("/", (req, res) => {
   let user = users[req.session.user_id];
-  if(user){
+  if (user) {
     return res.redirect("urls");
   }
   return res.redirect("/login");
@@ -61,7 +48,7 @@ app.get("/urls", (req, res) => {
 });
 
 app.get("/urls/new", (req, res) => {
-  if(!req.session.user_id){
+  if (!req.session.user_id) {
     return res.redirect("/login");
   }
   let templateVars = {
@@ -92,6 +79,11 @@ app.get("/hello", (req, res) => {
 app.get("/u/:shortURL", (req, res) => {
   let { shortURL } = req.params;
   const longURL = urlDatabase[shortURL].longURL;
+  let user_id = req.session.user_id;
+  urlDatabase[shortURL].visits += 1;
+  if (!urlDatabase[shortURL].uniqueVisits.includes(user_id)) {
+    urlDatabase[shortURL].uniqueVisits.push(req.session.user_id);
+  }
   res.redirect(longURL);
 });
 
@@ -105,15 +97,16 @@ app.get("/login", (req, res) => {
 app.post("/urls", (req, res) => {
   let shortURL = generateRandomString();
   let { longURL } = req.body;
-  urlDatabase[shortURL] = {longURL, userID: req.session['user_id']};
+  let dateCreated = new Date().toJSON().slice(0,10).replace(/-/g,'/');
+  urlDatabase[shortURL] = {longURL, dateCreated, visits: 0, uniqueVisits: [], userID: req.session['user_id']};
   res.redirect("/urls/" + shortURL);
 });
 
 app.post("/urls/:id", (req, res) => {
   let { id } = req.params;
   let { newLongURL } = req.body;
-  if(req.session.user_id !== urlDatabase[id].userID){
-    return res.status(401).send("Unauthorized access.");
+  if (req.session.user_id !== urlDatabase[id].userID) {
+    return res.render("urls_error", {user: users[req.session.user_id], error: 401, errorMessage: "Unauthorized access."});
   }
   urlDatabase[id].longURL = newLongURL;
   res.redirect("/urls");
@@ -121,8 +114,8 @@ app.post("/urls/:id", (req, res) => {
 
 app.post("/urls/:shortURL/delete", (req, res) => {
   let { shortURL } = req.params;
-  if(req.session.user_id !== urlDatabase[shortURL].userID){
-    return res.status(401).send("Unauthorized access.");
+  if (req.session.user_id !== urlDatabase[shortURL].userID) {
+    return res.render("urls_error", {user: users[req.session.user_id], error: 401, errorMessage: "Unauthorized access."});
   }
   delete urlDatabase[shortURL];
   res.redirect("/urls");
@@ -131,8 +124,8 @@ app.post("/urls/:shortURL/delete", (req, res) => {
 app.post("/register", (req, res) => {
   let { email, password } = req.body;
   let hashedPassword = bcrypt.hashSync(password, 10);
-  if(!email || !password || isInObj(users, (user) => user.email === email)){
-    return res.status(400).send("User already exists or User/Password field is empty");
+  if (!email || !password || isInObj(users, (user) => user.email === email)) {
+    return res.render("urls_error", {user: users[req.session.user_id], error: 400, errorMessage: "User already exists or User/Password field is empty"});
   }
   let newId = generateRandomString();
   users[newId] = {
@@ -146,10 +139,13 @@ app.post("/register", (req, res) => {
 
 app.post("/login", (req, res) => {
   let user = getUserByEmail(users, req.body.email);
+  if (!user) {
+    return res.render("urls_error", {user: users[req.session.user_id], error: 403, errorMessage: "Invalid Email."});
+  }
   let passwordsEqual = bcrypt.compareSync(req.body.password, user.password);
-  if(!user || !passwordsEqual){
-    return res.status(403).send("Invalid Email or Password");
-  }else{
+  if (!passwordsEqual) {
+    return res.render("urls_error", {user: users[req.session.user_id], error: 403, errorMessage: "Invalid Password."});
+  } else {
     req.session.user_id = user.id;
   }
   res.redirect("/urls");
@@ -158,7 +154,7 @@ app.post("/login", (req, res) => {
 app.post("/logout", (req, res) => {
   req.session = null;
   res.redirect("/urls")
-})
+});
 
 app.listen(PORT, () => {
   console.log(`Example app listening on port ${PORT}!`);

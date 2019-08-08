@@ -10,7 +10,9 @@
 </head>
 <body>
   <% include partials/_header %>
-  <main style="margin: 1em;">
+  <main style="margin: 1em;" class="d-flex justify-content-center align-items-center flex-column mt-5 pt-5">
+    <h2>Error <%= error %></h3>
+    <p><%= errorMessage %></p>
   </main>
   <!-- Bootstrap JS -->
   <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
