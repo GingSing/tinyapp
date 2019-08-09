@@ -5,10 +5,13 @@ const bcrypt = require('bcrypt');
 const app = express();
 const PORT = 8080;
 
+const methodOverride = require('method-override');
+
 const { getUserByEmail, isInObj, generateRandomString, filterObj } = require('./helpers');
 
 app.set("view engine", "ejs");
 app.use(bodyParser.urlencoded({extended: true}));
+app.use(methodOverride('_method'));
 
 app.use(cookieSession({
   name: 'session',
@@ -38,6 +41,9 @@ app.get("/register", (req, res) => {
 });
 
 app.get("/urls", (req, res) => {
+  if(!req.session.user_id) {
+    return res.redirect("/login");
+  }
   let userID = req.session.user_id;
   let filteredURLS = filterObj(urlDatabase, (shortURL) => urlDatabase[shortURL].userID === userID);
   let templateVars = { 
@@ -62,6 +68,7 @@ app.get("/urls/:shortURL", (req, res) => {
   let templateVars = { 
     shortURL, 
     longURL: urlDatabase[shortURL].longURL,
+    urlDatabase,
     user: users[req.session.user_id]
   };
 
@@ -80,9 +87,14 @@ app.get("/u/:shortURL", (req, res) => {
   let { shortURL } = req.params;
   const longURL = urlDatabase[shortURL].longURL;
   let user_id = req.session.user_id;
+  if(!user_id){
+    user_id = generateRandomString();
+    res.session.user_id = user_id;
+  }
   urlDatabase[shortURL].visits += 1;
+  let date = new Date().toJSON().slice(0,10).replace(/-/g,'/');
   if (!urlDatabase[shortURL].uniqueVisits.includes(user_id)) {
-    urlDatabase[shortURL].uniqueVisits.push(req.session.user_id);
+    urlDatabase[shortURL].uniqueVisits.push({ id: user_id, timeStamp: date });
   }
   res.redirect(longURL);
 });
@@ -102,7 +114,7 @@ app.post("/urls", (req, res) => {
   res.redirect("/urls/" + shortURL);
 });
 
-app.post("/urls/:id", (req, res) => {
+app.put("/urls/:id", (req, res) => {
   let { id } = req.params;
   let { newLongURL } = req.body;
   if (req.session.user_id !== urlDatabase[id].userID) {
@@ -112,7 +124,7 @@ app.post("/urls/:id", (req, res) => {
   res.redirect("/urls");
 });
 
-app.post("/urls/:shortURL/delete", (req, res) => {
+app.delete("/urls/:shortURL", (req, res) => {
   let { shortURL } = req.params;
   if (req.session.user_id !== urlDatabase[shortURL].userID) {
     return res.render("urls_error", {user: users[req.session.user_id], error: 401, errorMessage: "Unauthorized access."});
