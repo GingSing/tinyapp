@@ -86,10 +86,11 @@ app.get("/hello", (req, res) => {
 app.get("/u/:shortURL", (req, res) => {
   let { shortURL } = req.params;
   const longURL = urlDatabase[shortURL].longURL;
+  console.log(longURL);
   let user_id = req.session.user_id;
   if(!user_id){
-    user_id = generateRandomString();
-    res.session.user_id = user_id;
+    let newId = generateRandomString();
+    req.session.user_id = newId;
   }
   urlDatabase[shortURL].visits += 1;
   let date = new Date().toJSON().slice(0,10).replace(/-/g,'/');
