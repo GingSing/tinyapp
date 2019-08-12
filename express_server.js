@@ -45,6 +45,7 @@ app.get("/urls", (req, res) => {
     return res.redirect("/login");
   }
   let userID = req.session.user_id;
+  //filterObj selects items based on conditional
   let filteredURLS = filterObj(urlDatabase, (shortURL) => urlDatabase[shortURL].userID === userID);
   let templateVars = { 
     user: users[req.session.user_id],
@@ -86,7 +87,7 @@ app.get("/hello", (req, res) => {
 app.get("/u/:shortURL", (req, res) => {
   let { shortURL } = req.params;
   const longURL = urlDatabase[shortURL].longURL;
-  console.log(longURL);
+  //if user_id does not exist then generate a new random string for the user 
   let user_id = req.session.user_id;
   if(!user_id){
     let newId = generateRandomString();
